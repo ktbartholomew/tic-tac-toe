@@ -80,13 +80,18 @@
       ctx.save();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // The grid for the tic-tac-toe board
       var gridImage = new Image();
+
+      // This onload event does the rendering the first time this image is used.
+      // After that, the image is cached and loads instantly.
       gridImage.onload = function () {
         ctx.drawImage(gridImage, 0, 0, 768, 768);
       };
       gridImage.src = 'grid.svg';
       ctx.drawImage(gridImage, 0, 0, 768, 768);
 
+      // Loop through and render the squares on the board
       for(var i = 0; i < TTGrid.length; i++) {
         for(var j = 0; j < TTGrid[i].length; j++) {
           if (TTGrid[i][j].filledWith) {
@@ -100,6 +105,7 @@
         }
       }
 
+      // If there's a winner, show who won
       if (TTGameWinner) {
         if(TTGameWinner == TTX) {
           var winnerName = 'Red';
@@ -125,11 +131,15 @@
       requestAnimationFrame(render);
     };
 
+    // Class for a tic-tac-toe square
     var TTSquare = function () {
       this.filled = false;
       this.filledWith = null;
     };
 
+    // Fill this square with the appropriate image for the next turn in the
+    // game. Determine after filling if this ends the game.
+    // Don't do all this if the game is over.
     TTSquare.prototype.fill = function () {
       if (TTGameOver) {
         return;
@@ -162,6 +172,7 @@
     var TTNextFill;
     var TTGrid;
 
+    // Reset the game
     var resetGame = function () {
       TTGameWinner = null;
       TTGameOver = false;
@@ -185,6 +196,8 @@
       ];
     };
 
+    // convert a pixel coordinate (the size of the canvas) to a game coordinate
+    // (a 0-indexed tic-tac-toe grid)
     var toTTGrid = function (coords) {
       var grid = {
         x: 0,
@@ -209,6 +222,8 @@
       return grid;
     };
 
+    // Determine if there's a winning position on the board. Modify TTGameWinner
+    // and TTGameOver accordingly
     var determineWinner = function () {
       var winner = null;
 
@@ -246,24 +261,37 @@
       }
     }
 
-    canvas.addEventListener('click', function (e) {
+    var clickOrTapHandler = function (e) {
+      // Prevent taps from turning into clicks
+      e.preventDefault();
+
+      var eventPos = {
+        x: e.clientX || e.changedTouches[0].clientX,
+        y: e.clientY || e.changedTouches[0].clientY
+      };
+
       var canvasPos = {
         x: 0,
         y: 0
-      }
+      };
 
-      canvasPos.x = (e.clientX - canvas.offsetLeft) * canvas.width / canvas.offsetWidth;
-      canvasPos.y = (e.clientY - canvas.offsetTop) * canvas.height / canvas.offsetHeight;
+      canvasPos.x = (eventPos.x - canvas.offsetLeft) * canvas.width / canvas.offsetWidth;
+      canvasPos.y = (eventPos.y - canvas.offsetTop) * canvas.height / canvas.offsetHeight;
 
       var ttCoords = toTTGrid(canvasPos);
 
       TTGrid[ttCoords.x][ttCoords.y].fill(TTNextFill);
-    });
+    };
+
+    canvas.addEventListener('click', clickOrTapHandler);
+    canvas.addEventListener('touchend', clickOrTapHandler);
+
 
     document.getElementById('reset-game').addEventListener('click', function () {
       resetGame();
     });
 
+    // Reset (initialize) the game and kick off the render loop!
     resetGame();
     requestAnimationFrame(render);
 
