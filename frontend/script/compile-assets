@@ -1,0 +1,15 @@
+#!/usr/bin/env node
+
+var async = require('async');
+
+var doSass = require('./lib/do-sass');
+var doWebpack = require('./lib/do-webpack');
+
+async.parallel([
+  doSass,
+  doWebpack
+], function (err, result) {
+  if (err) {
+    throw err;
+  }
+});

@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+
+var path = require('path');
+var chokidar = require('chokidar');
+var rootDir = require('./lib/root-dir');
+var doSass = require('./lib/do-sass');
+var doWebpack = require('./lib/do-webpack');
+
+chokidar.watch(path.resolve(rootDir, 'src/src/sass'))
+.on('all', function () {
+  doSass(function (err, result) {
+    if (err) {
+      console.log(err);
+    }
+  });
+});
+
+chokidar.watch(path.resolve(rootDir, 'src/src/js'))
+.on('all', function () {
+  doWebpack(function (err, result) {
+    if (err) {
+      console.log(err);
+    }
+  });
+});
