@@ -1,0 +1,15 @@
+{
+  "name": "tic-tac-toe-api",
+  "version": "1.0.0",
+  "description": "API for tic-tac-toe game",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Keith Bartholomew <keith.bartholomew@rackspace.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "express": "^4.13.4",
+    "ws": "^1.0.1"
+  }
+}

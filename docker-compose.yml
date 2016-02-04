@@ -1,0 +1,25 @@
+db_data:
+  image: rethinkdb:2.2.4
+  volumes:
+    - /data
+  command: /bin/true
+
+db:
+  image: rethinkdb:2.2.4
+  ports:
+    - 9000:8080
+  volumes_from:
+    - db_data
+
+api:
+  build: api
+  links:
+    - db:db
+
+frontend:
+  build: frontend
+  links:
+    - api:api
+    - db:db
+  ports:
+    - 80:80
