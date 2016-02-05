@@ -2,10 +2,10 @@ var red = '#CC523E';
 var blue = '#698DCC';
 
 var TTX = new Image();
-TTX.src = '/x.svg';
+TTX.src = '/x.png';
 
 var TTCircle = new Image();
-TTCircle.src = '/circle.svg';
+TTCircle.src = '/circle.png';
 
 var GameRenderer = function (options) {
   this.game = options.game;
@@ -38,7 +38,7 @@ var doRender = function () {
   gridImage.onload = function () {
     // ctx.drawImage(gridImage, 0, 0, 768, 768);
   };
-  gridImage.src = '/grid.svg';
+  gridImage.src = '/grid.png';
   ctx.drawImage(gridImage, 0, 0, 768, 768);
 
   // Loop through and render the squares on the board
