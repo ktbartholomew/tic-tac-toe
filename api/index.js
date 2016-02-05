@@ -32,14 +32,15 @@ var findOpenGame = function (games) {
 var actions = {
   joinGame: function (options, callback) {
     var gameIndex;
+    var player;
 
     if (findOpenGame(Games) !== null) {
       gameIndex = findOpenGame(Games);
-      Games[gameIndex].addPlayer(options.client);
+      player = Games[gameIndex].addPlayer(options.client);
     } else {
       gameIndex = nextGameIndex++;
       var newGame = new Game();
-      newGame.addPlayer(options.client);
+      player = newGame.addPlayer(options.client);
 
       Games[gameIndex] = newGame;
     }
@@ -48,7 +49,8 @@ var actions = {
       send: {
         action: 'joinGame',
         data: {
-          gameId: gameIndex
+          gameId: gameIndex,
+          team: player.team
         }
       }
     });
@@ -64,18 +66,17 @@ server.on('connection', function connection(client) {
       return console.log('Message not valid JSON: %s', message);
     }
 
-    try {
-      actions[data.action].call(actions, {
-        client: client,
-        data: data
-      }, function (err, result) {
-        if (result.send) {
-          client.send(JSON.stringify(result.send));
-        }
-      });
-    } catch (e) {
-      console.log('Unsupported action: %s', data.action);
-      throw e;
+    if (typeof actions[data.action] !== 'function') {
+      return;
     }
+
+    actions[data.action].call(actions, {
+      client: client,
+      data: data
+    }, function (err, result) {
+      if (result.send) {
+        client.send(JSON.stringify(result.send));
+      }
+    });
   });
 });

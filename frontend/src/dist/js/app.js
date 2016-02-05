@@ -44,20 +44,217 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(1);
+	var socket = __webpack_require__(1);
+	// var GameRenderer = require('./renderer');
+	var Game = __webpack_require__(2);
 
-	var canvas = document.createElement('canvas');
-	canvas.width = 768;
-	canvas.height = 768;
-	document.getElementById('canvas').appendChild(canvas);
-	var ctx = canvas.getContext('2d');
+	var activeGame = new Game({
+	  socket: socket,
+	  container: document.getElementById('game-container')
+	});
+
+
+	document.getElementById('reset-game').addEventListener('click', function () {
+	  activeGame.leave();
+	  activeGame = new Game({
+	    socket: socket,
+	    container: document.getElementById('game-container')
+	  });
+	  activeGame.join();
+	});
+
+
+/***/ },
+/* 1 */
+/***/ function(module, exports) {
+
+	var ws = new WebSocket('ws://localhost:8081');
+
+	module.exports = ws;
+
+
+/***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var GameRenderer = __webpack_require__(3);
+
+	var WAITING = 'waiting';
+	var IN_PROGRESS = 'in-progress';
+	var ABANDONED = 'abandoned';
+	var FINISHED = 'finished';
+	var FINISHED_DRAW = 'finished-draw';
+
+	var Game = function (options) {
+	  this.socket = options.socket;
+	  this.id = null;
+	  this.status = WAITING;
+	  this.winner = null;
+	  this.myTeam = null;
+	  this.next = 'x';
+	  this.grid = [
+	    [
+	      null,
+	      null,
+	      null
+	    ],
+	    [
+	      null,
+	      null,
+	      null
+	    ],
+	    [
+	      null,
+	      null,
+	      null
+	    ]
+	  ];
+
+	  this.renderer = new GameRenderer({
+	    game: this,
+	    container: options.container
+	  });
+
+	  this.renderer.render();
+
+	  this.socket.addEventListener('open', this.join.bind(this));
+	  this.socket.addEventListener('message', handleMessage.bind(this));
+	};
+
+	Game.prototype.fillSquare = function (options) {
+	  this.socket.send(JSON.stringify({
+	    action: 'fillSquare',
+	    data: {
+	      coords: {
+	        x: options.x,
+	        y: options.y,
+	      },
+	      team: this.myTeam
+	    }
+	  }));
+	};
+
+	Game.prototype.join = function () {
+	  this.socket.send(JSON.stringify({
+	    action: 'joinGame',
+	    gameId: null
+	  }));
+	};
+
+	Game.prototype.leave = function () {
+	  this.socket.send(JSON.stringify({
+	    action: 'leaveGame',
+	    data: {
+	      team: this.myTeam
+	    }
+	  }));
+	};
+
+	var handleMessage = function (e) {
+	  var message;
+	  try {
+	    message = JSON.parse(e.data);
+	  } catch (error) {
+	    console.error('Received malformed JSON from server: ' + e.data);
+	    console.error(error.stack);
+	  }
+
+	  if (typeof handlers[message.action] === 'function') {
+	    handlers[message.action].bind(this)(message);
+	  }
+	};
+
+	var handlers = {
+	  joinGame: function (message) {
+	    this.id = message.data.gameId;
+	    this.myTeam = message.data.team;
+
+	    handlers.updateGameStatus.bind(this)({
+	      data: {
+	        status: (this.myTeam === 'x') ? WAITING : IN_PROGRESS
+	      }
+	    });
+
+	    // window.history.pushState({}, '', '/' + this.id);
+
+	    requestAnimationFrame(function () {
+	      document.getElementById('game-id').textContent = this.id;
+	      document.getElementById('game-team').textContent = this.myTeam.toUpperCase();
+	    }.bind(this));
+	  },
+	  updateGameStatus: function (message) {
+	    this.status = message.data.status;
+	    var statusString;
+
+	    switch(this.status) {
+	      case IN_PROGRESS:
+	        statusString = 'In progress';
+	      break;
+	      case WAITING:
+	        statusString = 'Waiting for opponent to join';
+	      break;
+	      case ABANDONED:
+	        statusString = 'Abandoned (a player left the game)';
+	      break;
+	      case FINISHED:
+	        statusString = 'Finished';
+	      break;
+	      case FINISHED_DRAW:
+	        statusString = 'Draw';
+	      break;
+	    }
+
+	    requestAnimationFrame(function () {
+	      document.getElementById('game-status').textContent = statusString;
+	    }.bind(this));
+	  },
+	  updateGrid: function (message) {
+	    this.grid = message.data.grid;
+	    this.renderer.render();
+	  },
+	  updateWinner: function (message) {
+	    this.winner = message.data.winner;
+	  }
+	};
+
+	module.exports = Game;
+
+
+/***/ },
+/* 3 */
+/***/ function(module, exports) {
 
 	var red = '#CC523E';
 	var blue = '#698DCC';
 
-	var render = function () {
+	var TTX = new Image();
+	TTX.src = '/x.svg';
+
+	var TTCircle = new Image();
+	TTCircle.src = '/circle.svg';
+
+	var GameRenderer = function (options) {
+	  this.game = options.game;
+
+	  this.canvas = document.createElement('canvas');
+	  this.canvas.width = 768;
+	  this.canvas.height = 768;
+
+	  options.container.innerHTML = '';
+	  options.container.appendChild(this.canvas);
+
+	  this.canvas.addEventListener('click', clickOrTapHandler.bind(this));
+	  this.canvas.addEventListener('touchend', clickOrTapHandler.bind(this));
+	};
+
+	GameRenderer.prototype.render = function () {
+	  requestAnimationFrame(doRender.bind(this));
+	};
+
+	var doRender = function () {
+	  var ctx = this.canvas.getContext('2d');
 	  ctx.save();
-	  ctx.clearRect(0, 0, canvas.width, canvas.height);
+	  ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 	  // The grid for the tic-tac-toe board
 	  var gridImage = new Image();
@@ -65,29 +262,31 @@
 	  // This onload event does the rendering the first time this image is used.
 	  // After that, the image is cached and loads instantly.
 	  gridImage.onload = function () {
-	    ctx.drawImage(gridImage, 0, 0, 768, 768);
+	    // ctx.drawImage(gridImage, 0, 0, 768, 768);
 	  };
 	  gridImage.src = '/grid.svg';
 	  ctx.drawImage(gridImage, 0, 0, 768, 768);
 
 	  // Loop through and render the squares on the board
-	  for(var i = 0; i < TTGrid.length; i++) {
-	    for(var j = 0; j < TTGrid[i].length; j++) {
-	      if (TTGrid[i][j].filledWith) {
+	  for(var i = 0; i < this.game.grid.length; i++) {
+	    for(var j = 0; j < this.game.grid[i].length; j++) {
+	      if (this.game.grid[i][j]) {
 	        var squareCoords = toCanvasGrid({x: i, y: j});
 
 	        squareCoords.x = squareCoords.x + 32;
 	        squareCoords.y = squareCoords.y + 32;
 
-	        ctx.drawImage(TTGrid[i][j].filledWith, squareCoords.x, squareCoords.y, 192, 192);
+	        var filledWith = (this.game.grid[i][j] === 'x') ? TTX : TTCircle;
+
+	        ctx.drawImage(filledWith, squareCoords.x, squareCoords.y, 192, 192);
 	      }
 	    }
 	  }
 
 	  // If there's a winner, show who won
-	  if (TTGameWinner) {
+	  if (this.game.winner) {
 	    var winnerName;
-	    if(TTGameWinner == TTX) {
+	    if(this.game.winner == 'x') {
 	      winnerName = 'Red';
 	      ctx.fillStyle = red;
 	    } else {
@@ -108,72 +307,7 @@
 	  }
 
 	  ctx.restore();
-	  requestAnimationFrame(render);
-	};
-
-	// Class for a tic-tac-toe square
-	var TTSquare = function () {
-	  this.filled = false;
-	  this.filledWith = null;
-	};
-
-	// Fill this square with the appropriate image for the next turn in the
-	// game. Determine after filling if this ends the game.
-	// Don't do all this if the game is over.
-	TTSquare.prototype.fill = function () {
-	  if (TTGameOver) {
-	    return;
-	  }
-
-	  if (this.filled) {
-	    return;
-	  }
-
-	  this.filled = true;
-	  this.filledWith = TTNextFill;
-
-	  if (TTNextFill === TTX) {
-	    TTNextFill = TTCircle;
-	  } else {
-	    TTNextFill = TTX;
-	  }
-
-	  determineWinner();
-	};
-
-	var TTX = new Image();
-	TTX.src = '/x.svg';
-
-	var TTCircle = new Image();
-	TTCircle.src = '/circle.svg';
-
-	var TTGameWinner;
-	var TTGameOver;
-	var TTNextFill;
-	var TTGrid;
-
-	// Reset the game
-	var resetGame = function () {
-	  TTGameWinner = null;
-	  TTGameOver = false;
-	  TTNextFill = TTX;
-	  TTGrid = [
-	    [
-	      new TTSquare(),
-	      new TTSquare(),
-	      new TTSquare()
-	    ],
-	    [
-	      new TTSquare(),
-	      new TTSquare(),
-	      new TTSquare()
-	    ],
-	    [
-	      new TTSquare(),
-	      new TTSquare(),
-	      new TTSquare()
-	    ]
-	  ];
+	  // requestAnimationFrame(render);
 	};
 
 	// convert a pixel coordinate (the size of the canvas) to a game coordinate
@@ -202,45 +336,6 @@
 	  return grid;
 	};
 
-	// Determine if there's a winning position on the board. Modify TTGameWinner
-	// and TTGameOver accordingly
-	var determineWinner = function () {
-	  var winner = null;
-
-	  // There are 8 winning positions (3 horizontal, 3 vertical, 2 diagonal)
-	  winningVectors = [
-	    [{x: 0, y: 0}, {x: 0, y: 1}, {x: 0, y: 2}],
-	    [{x: 1, y: 0}, {x: 1, y: 1}, {x: 1, y: 2}],
-	    [{x: 2, y: 0}, {x: 2, y: 1}, {x: 2, y: 2}],
-	    [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}],
-	    [{x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}],
-	    [{x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}],
-	    [{x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: 2}],
-	    [{x: 2, y: 0}, {x: 1, y: 1}, {x: 0, y: 2}]
-	  ];
-
-	  winningVectors.forEach(function (vector) {
-	    var fillers = [
-	      TTGrid[vector[0].x][vector[0].y].filledWith,
-	      TTGrid[vector[1].x][vector[1].y].filledWith,
-	      TTGrid[vector[2].x][vector[2].y].filledWith
-	    ];
-
-	    if (
-	      fillers[0] == fillers[1] &&
-	      fillers[1] == fillers[2] &&
-	      fillers[0] !== null
-	      ) {
-	      winner = fillers[0];
-	    }
-	  });
-
-	  if (winner !== null) {
-	    TTGameOver = true;
-	    TTGameWinner = winner;
-	  }
-	};
-
 	var clickOrTapHandler = function (e) {
 	  // Prevent taps from turning into clicks
 	  e.preventDefault();
@@ -255,79 +350,15 @@
 	    y: 0
 	  };
 
-	  canvasPos.x = (eventPos.x - canvas.offsetLeft) * canvas.width / canvas.offsetWidth;
-	  canvasPos.y = (eventPos.y - canvas.offsetTop) * canvas.height / canvas.offsetHeight;
+	  canvasPos.x = (eventPos.x - this.canvas.offsetLeft) * this.canvas.width / this.canvas.offsetWidth;
+	  canvasPos.y = (eventPos.y - this.canvas.offsetTop) * this.canvas.height / this.canvas.offsetHeight;
 
 	  var ttCoords = toTTGrid(canvasPos);
 
-	  TTGrid[ttCoords.x][ttCoords.y].fill(TTNextFill);
+	  this.game.fillSquare(ttCoords);
 	};
 
-	canvas.addEventListener('click', clickOrTapHandler);
-	canvas.addEventListener('touchend', clickOrTapHandler);
-
-
-	document.getElementById('reset-game').addEventListener('click', function () {
-	  resetGame();
-	});
-
-	// Reset (initialize) the game and kick off the render loop!
-	resetGame();
-	requestAnimationFrame(render);
-
-
-/***/ },
-/* 1 */
-/***/ function(module, exports) {
-
-	var ws = new WebSocket('ws://localhost:8081');
-
-	var getGameIdFromRoute = function () {
-	  var path = window.location.pathname;
-	  path = path.replace(/^[\/]?(.*?)[\/]?$/, '$1');
-	  path = path.split('/');
-
-	  if (path[0] === '') {
-	    return null;
-	  } else {
-	    return parseInt(path[0]);
-	  }
-	};
-
-	ws.addEventListener('open', function () {
-	  ws.send(JSON.stringify({
-	    action: 'joinGame',
-	    gameId: getGameIdFromRoute()
-	  }));
-	});
-
-	ws.addEventListener('message', function (e) {
-	  var data;
-	  try {
-	    data = JSON.parse(e.data);
-	  } catch (error) {
-	    console.error('Received malformed JSON from server: ' + e.data);
-	    console.error(error.stack);
-	  }
-
-	  try {
-	    actions[data.action].call(actions, {
-	      data: data.data
-	    }, function (err, result) {
-
-	    });
-	  } catch (error) {
-	    return console.log('Unsupported action: %s', data.action);
-	  }
-
-	});
-
-
-	var actions = {
-	  joinGame: function (options, callback) {
-	    window.history.pushState({}, '', '/' + options.data.gameId);
-	  }
-	};
+	module.exports = GameRenderer;
 
 
 /***/ }

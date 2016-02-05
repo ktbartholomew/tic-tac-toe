@@ -1,23 +1,26 @@
 @import "variables";
 
 body, html {
+  background: #fafafa;
   color: $text-color;
   font-family: Helvetica, Arial, Sans-serif;
   margin: 0;
   padding: 0;
+
+  * {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+  }
 }
 
 .header {
   height: 48px;
   padding: 12px;
 
-  &:before, &:after {
-    content: " ";
-    display: table;
-  }
-
   &:after {
     clear: both;
+    content: " ";
+    display: block;
   }
 
   h1 {
@@ -26,6 +29,11 @@ body, html {
     font-size: 24px;
     margin: 0 1em;
   }
+}
+
+.game-status {
+  padding: 20px;
+  text-align: center;
 }
 
 #reset-game {
@@ -38,17 +46,29 @@ body, html {
   transition: background 0.1s ease-in-out, border-color 0.1s ease-in-out, color 0.1s ease-in-out;
 
   &:hover, &:focus {
-    background: $red;
-    border-color: $red;
+    background: $blue;
+    border-color: $blue;
     color: white;
     cursor: pointer;
     outline: none;
   }
 }
 
-#canvas canvas {
-  cursor: pointer;
-  display: block;
+#game-container {
+  background: white;
+  box-shadow: 0px 1px 2px rgba(black, 0.14);
   margin: 0 auto;
-  max-width: 100%;
+  max-width: 448px;
+  padding: 32px;
+  text-align: center;
+  width: 100%;
+
+  canvas {
+    cursor: pointer;
+    display: block;
+    margin: 0 auto;
+    max-width: 384px;
+    transform: translateZ(0);
+    width: 100%;
+  }
 }

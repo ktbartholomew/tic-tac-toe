@@ -1,8 +1,14 @@
 body, html {
+  background: #fafafa;
   color: #444;
   font-family: Helvetica, Arial, Sans-serif;
   margin: 0;
   padding: 0;
+}
+
+body *, html * {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
 }
 
 .header {
@@ -10,13 +16,10 @@ body, html {
   padding: 12px;
 }
 
-.header:before, .header:after {
-  content: " ";
-  display: table;
-}
-
 .header:after {
   clear: both;
+  content: " ";
+  display: block;
 }
 
 .header h1 {
@@ -24,6 +27,11 @@ body, html {
   font-weight: normal;
   font-size: 24px;
   margin: 0 1em;
+}
+
+.game-status {
+  padding: 20px;
+  text-align: center;
 }
 
 #reset-game {
@@ -37,16 +45,28 @@ body, html {
 }
 
 #reset-game:hover, #reset-game:focus {
-  background: #CC523E;
-  border-color: #CC523E;
+  background: #698DCC;
+  border-color: #698DCC;
   color: white;
   cursor: pointer;
   outline: none;
 }
 
-#canvas canvas {
+#game-container {
+  background: white;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.14);
+  margin: 0 auto;
+  max-width: 448px;
+  padding: 32px;
+  text-align: center;
+  width: 100%;
+}
+
+#game-container canvas {
   cursor: pointer;
   display: block;
   margin: 0 auto;
-  max-width: 100%;
+  max-width: 384px;
+  transform: translateZ(0);
+  width: 100%;
 }
