@@ -68,7 +68,7 @@
 /* 1 */
 /***/ function(module, exports) {
 
-	var ws = new WebSocket('ws://' + location.hostname + ':8081');
+	var ws = new WebSocket('ws://' + location.hostname + '/live/');
 	module.exports = ws;
 
 
