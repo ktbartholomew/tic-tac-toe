@@ -11,15 +11,22 @@ db:
   volumes_from:
     - db_data
 
-api:
+app:
   build: api
   links:
     - db:db
+  stdin_open: true
+  tty: true
+  volumes:
+    - ./api:/usr/src/app/
+  command: nodemon
 
 frontend:
   build: frontend
   links:
-    - api:api
+    - app:app
     - db:db
   ports:
     - 80:80
+  volumes:
+    - ./frontend/src:/usr/share/nginx/html

@@ -9,7 +9,8 @@
   "author": "Keith Bartholomew <keith.bartholomew@rackspace.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "express": "^4.13.4",
+    "node-uuid": "1.4.7",
+    "rethinkdb": "2.2.1",
     "ws": "^1.0.1"
   }
 }

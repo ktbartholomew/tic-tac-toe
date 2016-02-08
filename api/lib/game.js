@@ -21,14 +21,14 @@ var Game = function () {
   this.totalMoves = 0;
 };
 
-Game.prototype.addPlayer = function (socket) {
+Game.prototype.addPlayer = function (socketId) {
   if (!this.isJoinable()) {
     return;
   }
 
   var newPlayer = new Player({
     game: this,
-    socket: socket,
+    socketId: socketId,
     team: (this.players.length === 0) ? X : O
   });
 

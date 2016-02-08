@@ -1,4 +1,5 @@
 var parseWSMessage = require('./parse-ws-message');
+var Sockets = require('./sockets');
 
 var Player = function (options) {
   options = options || {};
@@ -7,16 +8,18 @@ var Player = function (options) {
     throw new Error('options.team is required when instantiating a Player');
   }
 
-  if (!options.socket) {
-    throw new Error('options.socket is required when instantiating a Player');
+  if (!options.socketId) {
+    throw new Error('options.socketId is required when instantiating a Player');
   }
 
   if (!options.team) {
     throw new Error('options.team is required when instantiating a Player');
   }
 
-  this.game = options.game;
-  this.socket = options.socket;
+  Object.defineProperty(this, 'game', {value: options.game});
+  Object.defineProperty(this, 'socketId', {value: options.socketId, enumerable: true});
+  Object.defineProperty(this, 'socket', {value: Sockets[options.socketId]});
+
   this.team = options.team;
 
   addEventListeners.bind(this)();
@@ -31,6 +34,8 @@ Player.prototype.sendMessage = function (message) {
 };
 
 Player.prototype.fillSquare = function (data) {
+  console.log(data);
+  console.log(this);
   var coords = data.coords;
 
   this.game.fillSquare({
@@ -45,7 +50,7 @@ Player.prototype.leaveGame = function () {
 };
 
 var addEventListeners = function () {
-  this.socket.on('message', handleMessage.bind(this));
+  Sockets[this.socketId].on('message', handleMessage.bind(this));
 
   this.socket.on('close', function () {
     try {
