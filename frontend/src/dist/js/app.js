@@ -45,22 +45,26 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var socket = __webpack_require__(1);
-	// var GameRenderer = require('./renderer');
 	var Game = __webpack_require__(2);
+	var stats = __webpack_require__(4);
 
 	var activeGame = new Game({
 	  socket: socket,
 	  container: document.getElementById('game-container')
 	});
 
-
-	document.getElementById('reset-game').addEventListener('click', function () {
+	var rematch = function () {
 	  activeGame.leave();
 	  activeGame = new Game({
 	    socket: socket,
 	    container: document.getElementById('game-container')
 	  });
 	  activeGame.join();
+	};
+
+
+	document.getElementById('reset-game').addEventListener('click', function () {
+	  rematch();
 	});
 
 
@@ -68,8 +72,12 @@
 /* 1 */
 /***/ function(module, exports) {
 
-	var ws = new WebSocket('ws://' + location.hostname + '/live/');
+	var ws = new WebSocket('ws://' + 'docker' + '/live/');
 	module.exports = ws;
+
+	setInterval(function () {
+	  ws.send(JSON.stringify({action: 'ping'}));
+	}, 30000);
 
 
 /***/ },
@@ -86,6 +94,21 @@
 
 	var Game = function (options) {
 	  this.socket = options.socket;
+
+	  this.resetGame();
+
+	  this.renderer = new GameRenderer({
+	    game: this,
+	    container: options.container
+	  });
+
+	  this.renderer.render();
+
+	  this.socket.addEventListener('open', this.join.bind(this));
+	  this.socket.addEventListener('message', handleMessage.bind(this));
+	};
+
+	Game.prototype.resetGame = function () {
 	  this.id = null;
 	  this.status = WAITING;
 	  this.winner = null;
@@ -108,27 +131,18 @@
 	      null
 	    ]
 	  ];
-
-	  this.renderer = new GameRenderer({
-	    game: this,
-	    container: options.container
-	  });
-
-	  this.renderer.render();
-
-	  this.socket.addEventListener('open', this.join.bind(this));
-	  this.socket.addEventListener('message', handleMessage.bind(this));
 	};
 
 	Game.prototype.fillSquare = function (options) {
 	  this.socket.send(JSON.stringify({
 	    action: 'fillSquare',
 	    data: {
+	      gameId: this.id,
+	      team: this.myTeam,
 	      coords: {
 	        x: options.x,
 	        y: options.y,
-	      },
-	      team: this.myTeam
+	      }
 	    }
 	  }));
 	};
@@ -149,6 +163,14 @@
 	  }));
 	};
 
+	Game.prototype.gameOver = function () {
+	  setTimeout(function () {
+	    this.leave();
+	    this.resetGame();
+	    this.join();
+	  }.bind(this), Math.floor(Math.random() * 2500) + 2000);
+	};
+
 	var handleMessage = function (e) {
 	  var message;
 	  try {
@@ -167,6 +189,13 @@
 	  joinGame: function (message) {
 	    this.id = message.data.gameId;
 	    this.myTeam = message.data.team;
+	    var teamImage = new Image();
+
+	    if (this.myTeam === 'x') {
+	      teamImage.src = '/x.png';
+	    } else {
+	      teamImage.src = '/circle.png';
+	    }
 
 	    handlers.updateGameStatus.bind(this)({
 	      data: {
@@ -174,11 +203,10 @@
 	      }
 	    });
 
-	    // window.history.pushState({}, '', '/' + this.id);
-
+	    this.renderer.render();
 	    requestAnimationFrame(function () {
-	      document.getElementById('game-id').textContent = this.id;
-	      document.getElementById('game-team').textContent = this.myTeam.toUpperCase();
+	      document.getElementById('game-team').innerHTML = '';
+	      document.getElementById('game-team').appendChild(teamImage);
 	    }.bind(this));
 	  },
 	  updateGameStatus: function (message) {
@@ -194,15 +222,19 @@
 	      break;
 	      case ABANDONED:
 	        statusString = 'Abandoned (a player left the game)';
+	        this.gameOver();
 	      break;
 	      case FINISHED:
 	        statusString = 'Finished';
+	        this.gameOver();
 	      break;
 	      case FINISHED_DRAW:
 	        statusString = 'Draw';
+	        this.gameOver();
 	      break;
 	    }
 
+	    this.renderer.render();
 	    requestAnimationFrame(function () {
 	      document.getElementById('game-status').textContent = statusString;
 	    }.bind(this));
@@ -213,6 +245,8 @@
 	  },
 	  updateWinner: function (message) {
 	    this.winner = message.data.winner;
+	    this.renderer.render();
+	    this.gameOver();
 	  }
 	};
 
@@ -225,6 +259,9 @@
 
 	var red = '#CC523E';
 	var blue = '#698DCC';
+
+	var GridImage = new Image();
+	GridImage.src = '/grid.png';
 
 	var TTX = new Image();
 	TTX.src = '/x.png';
@@ -255,16 +292,7 @@
 	  ctx.save();
 	  ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-	  // The grid for the tic-tac-toe board
-	  var gridImage = new Image();
-
-	  // This onload event does the rendering the first time this image is used.
-	  // After that, the image is cached and loads instantly.
-	  gridImage.onload = function () {
-	    // ctx.drawImage(gridImage, 0, 0, 768, 768);
-	  };
-	  gridImage.src = '/grid.png';
-	  ctx.drawImage(gridImage, 0, 0, 768, 768);
+	  ctx.drawImage(GridImage, 0, 0, 768, 768);
 
 	  // Loop through and render the squares on the board
 	  for(var i = 0; i < this.game.grid.length; i++) {
@@ -358,6 +386,50 @@
 	};
 
 	module.exports = GameRenderer;
+
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var socket = __webpack_require__(1);
+
+	var handleMessage = function (e) {
+	  var message;
+	  try {
+	    message = JSON.parse(e.data);
+	  } catch (error) {
+	    console.error('Received malformed JSON from server: ' + e.data);
+	    console.error(error.stack);
+	  }
+
+	  if (typeof handlers[message.action] === 'function') {
+	    handlers[message.action](message.data);
+	  }
+	};
+
+	var handlers = {
+	  statsUpdate: function (stats) {
+	    var statElements = {
+	      totalMoves: document.getElementById('total-moves'),
+	      totalGames: document.getElementById('total-games'),
+	      abandonedGames: document.getElementById('abandoned-games'),
+	      tiedGames: document.getElementById('tied-games'),
+	      wonByX: document.getElementById('won-by-x'),
+	      wonByO: document.getElementById('won-by-o')
+	    };
+
+	    stats.forEach(function (stat) {
+	      if (statElements[stat.id] && stat.value.toString() !== statElements[stat.id].textContent) {
+	        requestAnimationFrame(function () {
+	          statElements[stat.id].textContent = stat.value.toString();
+	        });
+	      }
+	    });
+	  }
+	};
+
+	socket.addEventListener('message', handleMessage);
 
 
 /***/ }

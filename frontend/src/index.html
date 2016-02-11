@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Tic Tac Toe</title>
   <link rel="stylesheet" href="/dist/css/main.css">
 </head>
@@ -10,12 +11,44 @@
     <h1>Tic Tac Toe</h1>
     <button id="reset-game">New Game</button>
   </div>
-  <div class="game-status">
-    <strong>Game ID: </strong><span id="game-id"></span>
-    <strong>Status: </strong><span id="game-status">Waiting for opponent to join</span>
-    <strong>Your team:</strong><span id="game-team"></span>
+  <div class="game-area">
+    <div class="current-game">
+      <div class="game-status">
+        <strong>Status: </strong><span id="game-status">Waiting for opponent to join</span>
+        <strong>Your team:</strong><span id="game-team"></span>
+      </div>
+      <div id="game-container"></div>
+    </div>
+    <div class="stats">
+      <h4>Global Stats</h4>
+      <table>
+        <tr>
+          <th>Total Moves</th>
+          <td class="number" id="total-moves"></td>
+        </tr>
+        <tr>
+          <th>Total Games</th>
+          <td class="number" id="total-games"></td>
+        </tr>
+        <tr>
+          <th>Abandoned Games</th>
+          <td class="number" id="abandoned-games"></td>
+        </tr>
+        <tr>
+          <th>Tied Games</th>
+          <td class="number" id="tied-games"></td>
+        </tr>
+        <tr>
+          <th>Games won by X</th>
+          <td class="number" id="won-by-x"></td>
+        </tr>
+        <tr>
+          <th>Games won by O</th>
+          <td class="number" id="won-by-o"></td>
+        </tr>
+      </table>
+    </div>
   </div>
-  <div id="game-container"></div>
   <script src="/dist/js/app.js"></script>
 </body>
 </html>

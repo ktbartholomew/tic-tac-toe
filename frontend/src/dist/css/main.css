@@ -29,9 +29,21 @@ body *, html * {
   margin: 0 1em;
 }
 
+.game-area {
+  padding: 0 12px;
+}
+
 .game-status {
   padding: 20px;
   text-align: center;
+}
+
+.game-status #game-team img {
+  display: inline-block;
+  height: 1em;
+  margin-left: 0.5em;
+  vertical-align: top;
+  width: auto;
 }
 
 #reset-game {
@@ -50,6 +62,49 @@ body *, html * {
   color: white;
   cursor: pointer;
   outline: none;
+}
+
+@media (min-width: 768px) {
+  .current-game {
+    float: left;
+    width: 66.66667%;
+  }
+}
+
+@media (min-width: 768px) {
+  .stats {
+    float: left;
+    padding-left: 40px;
+    width: 33.33333%;
+  }
+}
+
+.stats table {
+  border: solid 1px #dadada;
+  border-spacing: 0px;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.stats table tr + tr th, .stats table tr + tr td {
+  border-top: solid 1px #dadada;
+}
+
+.stats table tr:nth-child(2n) th, .stats table tr:nth-child(2n) td {
+  background: white;
+}
+
+.stats table tr th, .stats table tr td {
+  padding: 0.5em;
+  margin: 0;
+}
+
+.stats table tr th {
+  text-align: left;
+}
+
+.stats table tr td.number {
+  text-align: right;
 }
 
 #game-container {

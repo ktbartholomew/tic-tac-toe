@@ -1,6 +1,9 @@
 var red = '#CC523E';
 var blue = '#698DCC';
 
+var GridImage = new Image();
+GridImage.src = '/grid.png';
+
 var TTX = new Image();
 TTX.src = '/x.png';
 
@@ -30,16 +33,7 @@ var doRender = function () {
   ctx.save();
   ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-  // The grid for the tic-tac-toe board
-  var gridImage = new Image();
-
-  // This onload event does the rendering the first time this image is used.
-  // After that, the image is cached and loads instantly.
-  gridImage.onload = function () {
-    // ctx.drawImage(gridImage, 0, 0, 768, 768);
-  };
-  gridImage.src = '/grid.png';
-  ctx.drawImage(gridImage, 0, 0, 768, 768);
+  ctx.drawImage(GridImage, 0, 0, 768, 768);
 
   // Loop through and render the squares on the board
   for(var i = 0; i < this.game.grid.length; i++) {

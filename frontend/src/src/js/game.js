@@ -8,6 +8,21 @@ var FINISHED_DRAW = 'finished-draw';
 
 var Game = function (options) {
   this.socket = options.socket;
+
+  this.resetGame();
+
+  this.renderer = new GameRenderer({
+    game: this,
+    container: options.container
+  });
+
+  this.renderer.render();
+
+  this.socket.addEventListener('open', this.join.bind(this));
+  this.socket.addEventListener('message', handleMessage.bind(this));
+};
+
+Game.prototype.resetGame = function () {
   this.id = null;
   this.status = WAITING;
   this.winner = null;
@@ -30,27 +45,18 @@ var Game = function (options) {
       null
     ]
   ];
-
-  this.renderer = new GameRenderer({
-    game: this,
-    container: options.container
-  });
-
-  this.renderer.render();
-
-  this.socket.addEventListener('open', this.join.bind(this));
-  this.socket.addEventListener('message', handleMessage.bind(this));
 };
 
 Game.prototype.fillSquare = function (options) {
   this.socket.send(JSON.stringify({
     action: 'fillSquare',
     data: {
+      gameId: this.id,
+      team: this.myTeam,
       coords: {
         x: options.x,
         y: options.y,
-      },
-      team: this.myTeam
+      }
     }
   }));
 };
@@ -71,6 +77,14 @@ Game.prototype.leave = function () {
   }));
 };
 
+Game.prototype.gameOver = function () {
+  setTimeout(function () {
+    this.leave();
+    this.resetGame();
+    this.join();
+  }.bind(this), Math.floor(Math.random() * 2500) + 2000);
+};
+
 var handleMessage = function (e) {
   var message;
   try {
@@ -89,6 +103,13 @@ var handlers = {
   joinGame: function (message) {
     this.id = message.data.gameId;
     this.myTeam = message.data.team;
+    var teamImage = new Image();
+
+    if (this.myTeam === 'x') {
+      teamImage.src = '/x.png';
+    } else {
+      teamImage.src = '/circle.png';
+    }
 
     handlers.updateGameStatus.bind(this)({
       data: {
@@ -96,11 +117,10 @@ var handlers = {
       }
     });
 
-    // window.history.pushState({}, '', '/' + this.id);
-
+    this.renderer.render();
     requestAnimationFrame(function () {
-      document.getElementById('game-id').textContent = this.id;
-      document.getElementById('game-team').textContent = this.myTeam.toUpperCase();
+      document.getElementById('game-team').innerHTML = '';
+      document.getElementById('game-team').appendChild(teamImage);
     }.bind(this));
   },
   updateGameStatus: function (message) {
@@ -116,15 +136,19 @@ var handlers = {
       break;
       case ABANDONED:
         statusString = 'Abandoned (a player left the game)';
+        this.gameOver();
       break;
       case FINISHED:
         statusString = 'Finished';
+        this.gameOver();
       break;
       case FINISHED_DRAW:
         statusString = 'Draw';
+        this.gameOver();
       break;
     }
 
+    this.renderer.render();
     requestAnimationFrame(function () {
       document.getElementById('game-status').textContent = statusString;
     }.bind(this));
@@ -135,6 +159,8 @@ var handlers = {
   },
   updateWinner: function (message) {
     this.winner = message.data.winner;
+    this.renderer.render();
+    this.gameOver();
   }
 };
 

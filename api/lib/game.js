@@ -1,4 +1,4 @@
-var Player = require('./player');
+var Sockets = require('./sockets');
 
 // Enums for game statuses
 var WAITING = 'waiting';
@@ -12,13 +12,20 @@ var X = 'x';
 var O = 'o';
 var EMPTY = null;
 
-var Game = function () {
-  this.status = WAITING;
-  this.next = X;
-  this.players = [];
+var Game = function (data) {
+  data = data || {};
+
+  if (data.id) {
+    this.id = data.id;
+  }
+
+  this.status = data.status || WAITING;
+  this.next = data.next || X;
+  this.players = data.players || [];
   // Start with an empty 3x3 grid
-  this.grid = [[EMPTY, EMPTY, EMPTY], [EMPTY, EMPTY, EMPTY], [EMPTY, EMPTY, EMPTY]];
-  this.totalMoves = 0;
+  this.grid = data.grid || [[EMPTY, EMPTY, EMPTY], [EMPTY, EMPTY, EMPTY], [EMPTY, EMPTY, EMPTY]];
+  this.totalMoves = data.totalMoves || 0;
+  this.winner = data.winner || null;
 };
 
 Game.prototype.addPlayer = function (socketId) {
@@ -26,11 +33,10 @@ Game.prototype.addPlayer = function (socketId) {
     return;
   }
 
-  var newPlayer = new Player({
-    game: this,
+  var newPlayer = {
     socketId: socketId,
     team: (this.players.length === 0) ? X : O
-  });
+  };
 
   this.broadcast({
     action: 'playerJoin',
@@ -43,7 +49,7 @@ Game.prototype.addPlayer = function (socketId) {
     this.updateStatus(IN_PROGRESS);
   }
 
-  newPlayer.sendMessage({
+  Sockets[newPlayer.socketId].sendMessage({
     action: 'updateGrid',
     data: {
       grid: this.grid
@@ -88,16 +94,16 @@ Game.prototype.fillSquare = function (options) {
   }
 
   // x and y both need values
-  if(typeof this.grid[options.x] === 'undefined' || typeof this.grid[options.x][options.y] === 'undefined') {
+  if(typeof this.grid[options.coords.x] === 'undefined' || typeof this.grid[options.coords.x][options.coords.y] === 'undefined') {
     return;
   }
 
   // Can't fill an already filled square
-  if (this.grid[options.x][options.y] !== EMPTY) {
+  if (this.grid[options.coords.x][options.coords.y] !== EMPTY) {
     return;
   }
 
-  this.grid[options.x][options.y] = this.next;
+  this.grid[options.coords.x][options.coords.y] = this.next;
   this.totalMoves++;
 
   // change the next filler to the opposite this one.
@@ -111,24 +117,26 @@ Game.prototype.fillSquare = function (options) {
   });
 
   if (this.isDraw()) {
+    console.log('Game %s ends in a draw', this.id);
     return this.updateStatus(FINISHED_DRAW);
   }
 
   var winner = this.getWinner();
 
   if (winner) {
+    console.log('%s wins game %s', winner, this.id);
     this.setWinner(winner);
     return this.updateStatus(FINISHED);
   }
 };
 
-Game.prototype.removePlayerFromGame = function (player) {
+Game.prototype.removePlayer = function (socketId) {
   if(this.status !== FINISHED && this.status !== FINISHED_DRAW) {
     this.updateStatus(ABANDONED);
   }
 
   this.players.forEach(function (item, index, array) {
-    if (player.team === item.team) {
+    if (socketId === item.socketId) {
       array.splice(index, 1);
     }
   }.bind(this));
@@ -146,10 +154,6 @@ Game.prototype.setWinner = function (winner) {
 };
 
 Game.prototype.getWinner = function () {
-  if(this.isDraw()) {
-    return null;
-  }
-
   var winner = null;
 
   // There are 8 winning positions (3 horizontal, 3 vertical, 2 diagonal)
@@ -184,16 +188,16 @@ Game.prototype.getWinner = function () {
 };
 
 Game.prototype.isDraw = function () {
-  return this.totalMoves === 9;
+  return this.getWinner() === null && this.totalMoves === 9;
 };
 
 Game.prototype.broadcast = function (data) {
   this.players.forEach(function (player) {
-    if(!player.isConnected()) {
+    if (! Sockets[player.socketId]) {
       return;
     }
 
-    player.sendMessage(data);
+    Sockets[player.socketId].sendMessage(data);
   });
 };
 

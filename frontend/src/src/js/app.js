@@ -1,18 +1,22 @@
 var socket = require('./socket');
-// var GameRenderer = require('./renderer');
 var Game = require('./game');
+var stats = require('./stats');
 
 var activeGame = new Game({
   socket: socket,
   container: document.getElementById('game-container')
 });
 
-
-document.getElementById('reset-game').addEventListener('click', function () {
+var rematch = function () {
   activeGame.leave();
   activeGame = new Game({
     socket: socket,
     container: document.getElementById('game-container')
   });
   activeGame.join();
+};
+
+
+document.getElementById('reset-game').addEventListener('click', function () {
+  rematch();
 });
