@@ -4,4 +4,4 @@ root=$(cd $(dirname ${0})/..; pwd)
 
 docker build \
 -t app \
-${root}/api
+${root}/app
