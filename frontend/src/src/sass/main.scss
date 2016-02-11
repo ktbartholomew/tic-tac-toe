@@ -1,4 +1,7 @@
 @import "variables";
+@import "mixins";
+@import "butterbar";
+@import "footer";
 
 body, html {
   background: #fafafa;
@@ -13,25 +16,30 @@ body, html {
   }
 }
 
-.header {
-  height: 48px;
-  padding: 12px;
+a {
+  color: $blue;
+  text-decoration: none;
 
-  &:after {
-    clear: both;
-    content: " ";
-    display: block;
+  &:hover {
+    text-decoration: underline;
   }
+}
+
+.header {
+  @include clearfix();
+  height: 48px;
+  padding: 12px 32px;
 
   h1 {
     float: left;
     font-weight: normal;
     font-size: 24px;
-    margin: 0 1em;
+    margin: 0;
   }
 }
 
 .game-area {
+  @include clearfix();
   padding: 0 12px;
 }
 

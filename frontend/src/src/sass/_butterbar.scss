@@ -1,0 +1,27 @@
+$butterbar-color: #fcf9cf;
+
+#butterbar {
+  background: $butterbar-color;
+  border: solid 1px mix(black, $butterbar-color, 10%);
+  border-top: none;
+
+  color: mix(black, $butterbar-color, 50%);
+  font-size: 14px;
+  padding: 6px 0;
+  text-align: center;
+  transition: transform 0.2s ease-out;
+
+
+  @media (min-width: 768px) {
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+    left: 20vw;
+    position: fixed;
+    width: 60vw;
+  }
+
+  &.hide {
+    transition-timing-function: ease-in;
+    transform: translate3d(0, -100%, 0);
+  }
+}
