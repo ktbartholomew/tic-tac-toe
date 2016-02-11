@@ -15,10 +15,10 @@ app:
   build: api
   links:
     - db:db
-  stdin_open: true
-  tty: true
-  volumes:
-    - ./api:/usr/src/app/
+  # stdin_open: true
+  # tty: true
+  # volumes:
+    # - ./api:/usr/src/app/
   command: nodemon
 
 frontend:
@@ -28,5 +28,5 @@ frontend:
     - db:db
   ports:
     - 80:80
-  volumes:
-    - ./frontend/src:/usr/share/nginx/html
+  # volumes:
+    # - ./frontend/src:/usr/share/nginx/html

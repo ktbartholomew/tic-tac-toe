@@ -1,0 +1,17 @@
+#!/bin/sh
+set -euo pipefail
+
+# Re-issue the certificate.
+docker run \
+  --rm \
+  --volumes-from letsencrypt-data \
+  quay.io/letsencrypt/letsencrypt certonly \
+  --domain xo.appfound.co \
+  --authenticator webroot \
+  --webroot-path /etc/letsencrypt/webrootauth/ \
+  --email keith.bartholomew@gmail.com \
+  --renew-by-default \
+  --agree-tos
+
+# Send NGINX a SIGHUP to trigger it to reload its configuration without shutting down.
+docker kill --signal=HUP nginx_proxy

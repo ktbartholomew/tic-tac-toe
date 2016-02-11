@@ -1,0 +1,9 @@
+#!/bin/bash
+
+docker rm -f db
+
+docker run \
+--detach \
+--name db \
+--volumes-from db-data \
+rethinkdb

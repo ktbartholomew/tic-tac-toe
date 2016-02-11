@@ -1,0 +1,23 @@
+{
+  "name": "tic-tac-toe",
+  "version": "1.0.0",
+  "description": "This is a simple Tic-Tac-Toe game implemented with HTML5 canvas. You play against yourself.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ktbartholomew/tic-tac-toe.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/ktbartholomew/tic-tac-toe/issues"
+  },
+  "homepage": "https://github.com/ktbartholomew/tic-tac-toe#readme",
+  "dependencies": {
+    "commander": "^2.9.0",
+    "nunjucks": "^2.3.0"
+  }
+}

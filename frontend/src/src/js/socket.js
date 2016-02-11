@@ -1,4 +1,6 @@
-var ws = new WebSocket('ws://' + 'docker' + '/live/');
+var wsProtocol = (window.location.protocol === 'https:') ? 'wss://' : 'ws://';
+
+var ws = new WebSocket(wsProtocol + window.location.hostname + '/live/');
 module.exports = ws;
 
 setInterval(function () {

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+docker rm -f app
+
+docker run \
+--detach \
+--name app \
+--link db:db \
+-P \
+app
