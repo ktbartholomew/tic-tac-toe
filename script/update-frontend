@@ -1,0 +1,9 @@
+#!/bin/bash
+
+root=$(cd $(dirname ${0})/..; pwd)
+
+${root}/frontend/script/compile-assets
+
+cd ${root}/frontend/src
+
+docker cp ./ nginx_proxy:/usr/share/nginx/html/

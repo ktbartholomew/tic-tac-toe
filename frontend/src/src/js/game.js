@@ -160,7 +160,6 @@ var handlers = {
   updateWinner: function (message) {
     this.winner = message.data.winner;
     this.renderer.render();
-    this.gameOver();
   }
 };
 
