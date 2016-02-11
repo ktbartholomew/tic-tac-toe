@@ -1,6 +1,7 @@
 var Sockets = require('./sockets');
 var GameStorage = require('./storage/games');
 var StatStorage = require('./storage/stats');
+var Redis = require('./storage/redis');
 
 /**
  * Arbiter for all websocket connections in a game, which corresponds to a
@@ -12,6 +13,7 @@ var WSConnection = function (options) {
 
   Object.defineProperty(this, 'id', {enumerable: true, value: options.id});
   Object.defineProperty(this, 'socket', {value: options.socket});
+  Object.defineProperty(this, 'redisClient', {value: Redis.getClient()});
 
   addEventListeners.bind(this)();
   this.getStats();
@@ -36,10 +38,20 @@ WSConnection.prototype.getStats = function () {
 };
 
 WSConnection.prototype.destroy = function () {
+  this.redisClient.unsubscribe();
   delete Sockets[this.id];
 };
 
 var addEventListeners = function () {
+  this.redisClient.on('message', function (channel, message) {
+    try {
+      this.socket.send(message);
+    } catch (e) {
+      console.log('Unable to relay message received from Redis channel %s', channel);
+    }
+  }.bind(this));
+  this.redisClient.subscribe('sockets:' + this.id);
+
   this.socket.on('message', function (message) {
     var data;
     try {

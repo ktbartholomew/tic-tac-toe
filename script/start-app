@@ -1,10 +1,27 @@
 #!/bin/bash
 
-docker rm -f app
+if [ -z ${2} ]; then
+  echo "Usage: $(basename ${0}) <scale=1> <color>"
+  exit 1
+fi
 
-docker run \
---detach \
---name app \
---link db:db \
--P \
-app
+docker ps -q -f name=app_${2} -f label=color=${2} | xargs docker rm -f
+
+for i in $(seq 1 ${1:-1}); do
+  docker run \
+  -d \
+  --label color=${2} \
+  --name=app_${2}_${i} \
+  --link redis:redis \
+  --link db:db \
+  -e affinity:image==app \
+  -e REDIS_HOST=redis \
+  -e RETHINKDB_HOST=db \
+  -P \
+  --restart=always \
+  app
+done;
+
+for i in $(seq 1 ${1:-1}); do
+  echo "Container running at "$(docker port app_${2}_${i} 8080)
+done;

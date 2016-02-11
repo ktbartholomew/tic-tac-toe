@@ -5,7 +5,7 @@ var WSConnection = require('./lib/ws-connection');
 var Sockets = require('./lib/sockets');
 var StatsFeed = require('./lib/stats-feed');
 
-var server = new WebSocketServer({ port: 8081 });
+var server = new WebSocketServer({ port: 8080 });
 
 server.on('connection', function connection(client) {
   var clientId = uuid.v4();

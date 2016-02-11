@@ -10,7 +10,7 @@ module.exports = {
       }
 
       for(var socketId in Sockets) {
-        Sockets[socketId].sendMessage({
+        Sockets.publish(socketId, {
           action: 'statsUpdate',
           data: [change.new_val]
         });

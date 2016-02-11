@@ -1,11 +1,8 @@
 upstream app {
   ip_hash;
-    server 172.99.70.226:32815;
-    server 172.99.70.226:32816;
-    server 172.99.70.226:32814;
-    server 172.99.70.226:32817;
-    server 172.99.70.226:32818;
-    server 172.99.70.226:32813;
+  {%- for server in app_servers %}
+    server {{ server }};
+  {%- endfor %}
 }
 
 server {

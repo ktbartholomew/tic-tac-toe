@@ -157,7 +157,7 @@ module.exports = {
 
       return r.connect({
         db: DB_NAME,
-        host: 'db'
+        host: process.env.RETHINKDB_HOST || 'db'
       })
       .then(function (conn) {
         Connection = conn;

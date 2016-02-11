@@ -1,0 +1,7 @@
+#!/bin/bash
+
+docker run \
+--name redis-data \
+--volume /data \
+redis \
+/bin/true

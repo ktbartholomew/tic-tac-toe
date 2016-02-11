@@ -1,0 +1,9 @@
+#!/bin/bash
+
+docker rm -f redis
+
+docker run \
+--detach \
+--name redis \
+--volumes-from redis-data \
+redis

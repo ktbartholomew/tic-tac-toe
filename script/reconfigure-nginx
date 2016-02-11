@@ -1,0 +1,123 @@
+#!/usr/bin/env node
+
+/**
+ * @desc Get the published ports of all running app containers with a given
+ *       deployment color (blue/green) and build an NGINX config file with each
+ *       of those containers as a server in an NGINX backend pool. Copy the
+ *       resulting config file to the nginx_proxy container, and have the
+ *       container reload the config file to apply the changes.
+ * @example reconfigure-nginx <blue|green>
+ *
+ */
+
+var fs = require('fs');
+var path = require('path');
+var child_process = require('child_process');
+var nunjucks = require('nunjucks');
+
+if (!process.argv[2]) {
+  console.log('Usage: %s <color>', path.basename(__filename));
+  process.exit();
+}
+
+var APP_COLOR = process.argv[2];
+
+var spawn = function () {
+  var spawnArgs = arguments;
+  return new Promise(function (resolve, reject) {
+    var spawned = child_process.spawn.apply(null, spawnArgs);
+    spawned.stdout.on('data', function (data) {
+      return resolve(data);
+    });
+
+    spawned.stderr.on('data', function (data) {
+      return reject(data);
+    });
+
+    spawned.on('close', function (code) {
+      if (code !== 0) {
+        return reject(code);
+      }
+
+      return resolve(code);
+    });
+  });
+}
+
+// Get the IDs of all the running app containers with our current deployment
+// color
+spawn('docker', [
+  'ps',
+  '-f',
+  'name=app_',
+  '-f',
+  'label=color=' + APP_COLOR,
+  '--format',
+  '{{.ID}}'
+], {})
+.then(function (data) {
+  var servers = data.toString().trim();
+  servers = servers.split('\n');
+
+  return servers;
+})
+.then(function (servers) {
+  return new Promise(function (resolve, reject) {
+    var allThePorts = [];
+
+    servers.forEach(function (server) {
+      spawn('docker', [
+        'port',
+        server,
+        '8080'
+      ], {})
+      .then(function (data) {
+        allThePorts.push(data.toString().trim());
+
+        if(allThePorts.length === servers.length) {
+          return resolve(allThePorts);
+        }
+      })
+      .catch(function (err) {
+        console.log(err.toString());
+      });
+    });
+  });
+})
+.then(function (serverIPs) {
+  // We now have an array of server IPs and ports, so let's render those into an NGINX config file
+  var nginxConfTemplate = path.resolve(__dirname, '../nginx/default.conf.template');
+  var nginxConfFile = path.resolve(__dirname, '../nginx/default.conf');
+
+  var config = nunjucks.render(nginxConfTemplate, {app_servers: serverIPs});
+
+  return new Promise(function (resolve, reject) {
+    fs.writeFile(nginxConfFile, config, 'utf-8', function (err, result) {
+      if (err) {
+        return reject(err);
+      }
+
+      return resolve(result);
+    });
+  });
+})
+.then(function (output) {
+  // Copy our generated config file to the nginx_proxy container
+  return spawn('docker', [
+    'cp',
+    path.resolve(__dirname, '../nginx/default.conf'),
+    'nginx_proxy:/etc/nginx/conf.d/default.conf'
+  ]);
+})
+.then(function (result) {
+  // Send SIGHUP to NGINX so it will reload the new config file
+  return spawn('docker', [
+    'kill',
+    '-s',
+    'HUP',
+    'nginx_proxy'
+  ]);
+})
+.catch(function (error) {
+  console.log(error);
+});

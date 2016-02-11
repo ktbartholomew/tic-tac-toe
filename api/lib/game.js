@@ -49,7 +49,7 @@ Game.prototype.addPlayer = function (socketId) {
     this.updateStatus(IN_PROGRESS);
   }
 
-  Sockets[newPlayer.socketId].sendMessage({
+  Sockets.publish(newPlayer.socketId, {
     action: 'updateGrid',
     data: {
       grid: this.grid
@@ -193,11 +193,7 @@ Game.prototype.isDraw = function () {
 
 Game.prototype.broadcast = function (data) {
   this.players.forEach(function (player) {
-    if (! Sockets[player.socketId]) {
-      return;
-    }
-
-    Sockets[player.socketId].sendMessage(data);
+    Sockets.publish(player.socketId, data);
   });
 };
 

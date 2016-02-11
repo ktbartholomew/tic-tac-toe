@@ -1,0 +1,7 @@
+#!/bin/bash
+
+docker run \
+--name db-data \
+--volume /data \
+rethinkdb \
+/bin/true
