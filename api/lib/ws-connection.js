@@ -122,9 +122,11 @@ var handlers = {
   fillSquare: function (data, callback) {
     GameStorage.getGame(data.gameId)
     .then(function (game) {
-      game.fillSquare(data);
+      var fillStatus = game.fillSquare(data);
 
-      return GameStorage.addMove(game);
+      if (fillStatus !== false) {
+        return GameStorage.addMove(game);
+      }
     });
   },
   ping: function (data, callback) {

@@ -85,22 +85,22 @@ Game.prototype.updateStatus = function (status) {
 Game.prototype.fillSquare = function (options) {
   // Don't allow moves on abandoned or finished games.
   if([ABANDONED, FINISHED, FINISHED_DRAW].indexOf(this.status) !== -1) {
-    return;
+    return false;
   }
 
   // make sure the right person is taking their turn
   if(options.team !== this.next) {
-    return;
+    return false;
   }
 
   // x and y both need values
   if(typeof this.grid[options.coords.x] === 'undefined' || typeof this.grid[options.coords.x][options.coords.y] === 'undefined') {
-    return;
+    return false;
   }
 
   // Can't fill an already filled square
   if (this.grid[options.coords.x][options.coords.y] !== EMPTY) {
-    return;
+    return false;
   }
 
   this.grid[options.coords.x][options.coords.y] = this.next;
