@@ -1,0 +1,17 @@
+#!/bin/bash
+set -euo pipefail
+
+if [ -z ${1} ]; then
+  echo "Usage: $(basename ${0}) <scale=1>"
+  exit 1
+fi
+
+docker ps -q -f name=bot_ | xargs docker rm -f
+
+for i in $(seq 1 ${1:-1}); do
+  docker run \
+  -d \
+  --name=bot_${i} \
+  --restart=always \
+  bot
+done;

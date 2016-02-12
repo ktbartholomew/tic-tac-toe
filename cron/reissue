@@ -6,7 +6,7 @@ docker run \
   --rm \
   --volumes-from letsencrypt-data \
   quay.io/letsencrypt/letsencrypt certonly \
-  --domain xo.appfound.co \
+  --domain tictac.io \
   --authenticator webroot \
   --webroot-path /etc/letsencrypt/webrootauth/ \
   --email keith.bartholomew@gmail.com \

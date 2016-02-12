@@ -1,5 +1,5 @@
 var WebSocket = require('ws');
-var ws = new WebSocket('wss://xo.appfound.co/live/');
+var ws = new WebSocket('wss://tictac.io/live/');
 
 var emptyGrid = [[null, null, null],[null, null, null],[null, null, null]];
 

@@ -1,0 +1,19 @@
+#!/bin/bash
+set -euo pipefail
+
+root=$(cd $(dirname ${0})/..; pwd)
+
+docker rm -f nginx_proxy
+
+docker run \
+-d \
+--name nginx_proxy \
+--link db:db \
+-p 443:443 \
+-p 80:80 \
+--restart always \
+--volumes-from letsencrypt-data \
+--volumes-from nginx-htpasswd-data \
+nginx_proxy
+
+${root}/script/update-frontend

@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euo pipefail
+
+root=$(cd $(dirname ${0})/..; pwd)
+
+docker build \
+-t nginx_proxy \
+${root}/nginx
