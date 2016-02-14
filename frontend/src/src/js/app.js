@@ -15,8 +15,3 @@ var rematch = function () {
   });
   activeGame.join();
 };
-
-
-document.getElementById('reset-game').addEventListener('click', function () {
-  rematch();
-});

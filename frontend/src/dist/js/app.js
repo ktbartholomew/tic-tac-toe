@@ -63,11 +63,6 @@
 	};
 
 
-	document.getElementById('reset-game').addEventListener('click', function () {
-	  rematch();
-	});
-
-
 /***/ },
 /* 1 */
 /***/ function(module, exports) {

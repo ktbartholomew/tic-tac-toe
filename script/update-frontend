@@ -7,4 +7,4 @@ ${root}/frontend/script/compile-assets
 
 cd ${root}/frontend/src
 
-docker cp ./ nginx_proxy:/usr/share/nginx/html/
+docker cp ./ ttt_frontend_data:/usr/share/nginx/html/

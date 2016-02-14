@@ -36,10 +36,10 @@ var spawn = function () {
 
     spawned.on('close', function (code) {
       if (code !== 0) {
-        return reject(code);
+        return reject();
       }
 
-      return resolve(code);
+      return resolve();
     });
   });
 }
@@ -49,27 +49,36 @@ var spawn = function () {
 spawn('docker', [
   'ps',
   '-f',
-  'name=app_',
+  'name=ttt_app_',
   '-f',
   'label=color=' + APP_COLOR,
   '--format',
   '{{.ID}}'
 ], {})
 .then(function (data) {
+  if (!data) {
+    return [];
+  }
+
   var servers = data.toString().trim();
   servers = servers.split('\n');
 
   return servers;
 })
 .then(function (servers) {
+  if (servers.length === 0) {
+    return servers;
+  }
+
   return new Promise(function (resolve, reject) {
     var allThePorts = [];
 
     servers.forEach(function (server) {
       spawn('docker', [
-        'port',
-        server,
-        '8080'
+        'inspect',
+        '--format',
+        '{{.NetworkSettings.IPAddress}}',
+        server
       ], {})
       .then(function (data) {
         allThePorts.push(data.toString().trim());
@@ -89,7 +98,12 @@ spawn('docker', [
   var nginxConfTemplate = path.resolve(__dirname, '../nginx/default.conf.template');
   var nginxConfFile = path.resolve(__dirname, '../nginx/default.conf');
 
-  var config = nunjucks.render(nginxConfTemplate, {app_servers: serverIPs});
+  var config = nunjucks.render(nginxConfTemplate, {
+    parseInt: parseInt,
+    env: process.env,
+    app_color: APP_COLOR,
+    app_servers: serverIPs
+  });
 
   return new Promise(function (resolve, reject) {
     fs.writeFile(nginxConfFile, config, 'utf-8', function (err, result) {
@@ -106,7 +120,7 @@ spawn('docker', [
   return spawn('docker', [
     'cp',
     path.resolve(__dirname, '../nginx/default.conf'),
-    'nginx_proxy:/etc/nginx/conf.d/default.conf'
+    'ttt_nginx_proxy:/etc/nginx/conf.d/default.conf'
   ]);
 })
 .then(function (result) {
@@ -115,9 +129,9 @@ spawn('docker', [
     'kill',
     '-s',
     'HUP',
-    'nginx_proxy'
+    'ttt_nginx_proxy'
   ]);
 })
 .catch(function (error) {
-  console.log(error);
+  console.log(error.toString());
 });

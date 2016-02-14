@@ -1,8 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-docker run \
---name redis-data \
---volume /data \
-redis \
-/bin/true
+container_exists=$(docker ps -a -q -f name=ttt_redis_data)
+
+if [[ -z ${container_exists} ]]; then
+  docker run \
+  --name ttt_redis_data \
+  --volume /data \
+  redis \
+  /bin/true
+fi

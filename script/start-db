@@ -1,10 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-docker rm -f db
+if [[ $(docker inspect -f {{.ID}} ttt_db 2> /dev/null) != "" ]]; then
+  docker rm -f ttt_db
+fi
 
 docker run \
 --detach \
---name db \
---volumes-from db-data \
+--name ttt_db \
+--volumes-from ttt_db_data \
 rethinkdb

@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+
+container_exists=$(docker ps -a -q -f name=ttt_frontend_data)
+
+if [[ -z ${container_exists} ]]; then
+  docker run \
+  --name ttt_frontend_data \
+  --volume /usr/share/nginx/html \
+  nginx \
+  /bin/true
+fi

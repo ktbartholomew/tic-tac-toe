@@ -1,0 +1,14 @@
+#!/bin/bash
+set -euo pipefail
+
+container_exists=$(docker ps -a -q -f name=ttt_letsencrypt_data)
+
+if [[ -z ${container_exists} ]]; then
+  docker run \
+  --name ttt_letsencrypt_data \
+  --volume /etc/letsencrypt \
+  --volume /var/lib/letsencrypt \
+  --entrypoint /bin/mkdir \
+  quay.io/letsencrypt/letsencrypt \
+  -p /etc/letsencrypt/webrootauth/
+fi

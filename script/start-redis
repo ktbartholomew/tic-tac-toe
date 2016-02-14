@@ -1,10 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-docker rm -f redis
+if [[ $(docker inspect -f {{.ID}} ttt_redis 2> /dev/null) != "" ]]; then
+  docker rm -f ttt_redis
+fi
 
 docker run \
 --detach \
---name redis \
---volumes-from redis-data \
+--name ttt_redis \
+--volumes-from ttt_redis_data \
 redis

@@ -1,28 +1,31 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ -z ${2} ]; then
+scale=${1:-1}
+color=${2:-}
+
+if [[ -z ${color} ]]; then
   echo "Usage: $(basename ${0}) <scale=1> <color>"
   exit 1
 fi
 
-docker ps -q -f name=app_${2} -f label=color=${2} | xargs docker rm -f
+docker ps -q -f name=ttt_app_${color} -f label=color=${color} | xargs docker rm -f
 
-for i in $(seq 1 ${1:-1}); do
+for i in $(seq 1 ${scale}); do
   docker run \
   -d \
-  --label color=${2} \
-  --name=app_${2}_${i} \
-  --link redis:redis \
-  --link db:db \
-  -e affinity:image==app \
+  --label color=${color} \
+  --name=ttt_app_${color}_${i} \
+  --link ttt_redis:redis \
+  --link ttt_db:db \
+  -e affinity:image==ttt_app \
+  -e affinity:container==ttt_nginx_proxy \
   -e REDIS_HOST=redis \
   -e RETHINKDB_HOST=db \
-  -P \
   --restart=always \
-  app
+  ttt_app
 done;
 
-for i in $(seq 1 ${1:-1}); do
-  echo "Container running at "$(docker port app_${2}_${i} 8080)
+for i in $(seq 1 ${scale}); do
+  echo "Container running at "$(docker inspect -f {{.NetworkSettings.IPAddress}} ttt_app_${color}_${i})":8080"
 done;

@@ -1,22 +1,60 @@
+{#-
+  Location blocks that define the document root and proxy paths for NGINX.
+  This macro will be either be rendered in the block for *:80 or *:443,
+  depending on the value of env.NGINX_SSL (0 or 1)
+-#}
+{%- macro pathStuff() %}
+    location / {
+      root /usr/share/nginx/html;
+    }
+
+    location /live/ {
+      proxy_pass http://app/;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+    }
+
+    {% if env.NGINX_RETHINKDB_PASS -%}
+    location /rethinkdb/ {
+      auth_basic rethinkdb;
+      auth_basic_user_file /etc/nginx/htpasswd/rethinkdb;
+      proxy_pass http://db:8080/;
+    }
+    {%- endif -%}
+{% endmacro -%}
+
 upstream app {
+{#-
+  Use the ip_hash LB method to stick clients to the same backend host as much
+  as possible
+-#}
   ip_hash;
+{#-
+  app_servers is an array of IPs and port numbers for all the app servers in
+  the given deployment (blue/green/whatever)
+-#}
   {%- for server in app_servers %}
-    server {{ server }};
+    server {{ server }}:8080;
   {%- endfor %}
 }
 
 server {
     listen         80;
-    server_name    tictac.io;
-    return         301 https://$server_name$request_uri;
+    server_name    {{ env.NGINX_DOMAIN }};
+    {%- if parseInt(env.NGINX_SSL) %}
+      return         301 https://$server_name$request_uri;
+    {%- else -%}
+      {{ pathStuff() }}
+    {%- endif %}
 }
-
+{% if parseInt(env.NGINX_SSL) %}
 server {
     listen 443 ssl;
 
     # certs sent to the client in SERVER HELLO are concatenated in ssl_certificate
-    ssl_certificate /etc/letsencrypt/live/tictac.io/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/tictac.io/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/{{ env.NGINX_DOMAIN }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ env.NGINX_DOMAIN }}/privkey.pem;
     ssl_dhparam /etc/letsencrypt/dhparams.pem;
 
     ssl_session_timeout 1d;
@@ -29,7 +67,7 @@ server {
     ssl_prefer_server_ciphers on;
 
     # HSTS (ngx_http_headers_module is required) (15768000 seconds = 6 months)
-    add_header Strict-Transport-Security max-age=15768000;
+    # add_header Strict-Transport-Security max-age=15768000;
 
     # OCSP Stapling ---
     # fetch OCSP records from URL in ssl_certificate and cache them
@@ -37,26 +75,11 @@ server {
     ssl_stapling_verify on;
 
     ## verify chain of trust of OCSP response using Root CA and Intermediate certs
-    ssl_trusted_certificate /etc/letsencrypt/live/tictac.io/chain.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/{{ env.NGINX_DOMAIN }}/chain.pem;
 
     resolver 8.8.8.8 8.8.4.4 valid=86400;
 
-    location / {
-      root /usr/share/nginx/html;
-    }
-
-    location /live/ {
-      proxy_pass http://app/;
-      proxy_http_version 1.1;
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection "upgrade";
-    }
-
-    location /rethinkdb/ {
-      auth_basic rethinkdb;
-      auth_basic_user_file /etc/nginx/htpasswd/rethinkdb;
-      proxy_pass http://db:8080/;
-    }
+    {{ pathStuff() }}
 
     # Pass the ACME challenge from letsencrypt to a directory within the container
 
@@ -67,3 +90,5 @@ server {
       }
     }
 }
+
+{% endif %}

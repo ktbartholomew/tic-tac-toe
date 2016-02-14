@@ -1,8 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-docker run \
---name db-data \
---volume /data \
-rethinkdb \
-/bin/true
+container_exists=$(docker ps -a -q -f name=ttt_db_data)
+
+if [[ -z ${container_exists} ]]; then
+  docker run \
+  --name ttt_db_data \
+  --volume /data \
+  rethinkdb \
+  /bin/true
+fi
