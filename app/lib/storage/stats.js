@@ -16,7 +16,6 @@ var StatStorage = {
     return bootstrap.getConnection()
     .then(function (rConn) {
       return r.table('stats').changes().run(rConn, function (err, cursor) {
-        console.log(arguments);
         cursor.each(callback);
       });
     });

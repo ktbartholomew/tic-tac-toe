@@ -4,8 +4,6 @@ var StatStorage = require('./storage/stats');
 module.exports = {
   init: function () {
     StatStorage.subscribe(function (err, change) {
-      console.log(arguments);
-      
       if (err) {
         console.log(err);
         return;
