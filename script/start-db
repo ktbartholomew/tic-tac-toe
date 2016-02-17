@@ -8,5 +8,8 @@ fi
 docker run \
 --detach \
 --name ttt_db \
+--env affinity:container==ttt_db_data \
+--net tictactoe \
+--restart always \
 --volumes-from ttt_db_data \
 rethinkdb

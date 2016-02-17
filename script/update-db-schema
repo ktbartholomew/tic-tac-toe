@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -ueo pipefail
+
+root=$(cd $(dirname ${0})/..; pwd)
+
+docker build -t ttt_db_schema ${root}/db-schema
+
+docker run \
+--rm \
+-it \
+--net tictactoe \
+-e DB_HOST=ttt_db \
+ttt_db_schema

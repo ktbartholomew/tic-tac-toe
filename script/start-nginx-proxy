@@ -1,18 +1,23 @@
 #!/bin/bash
 set -euo pipefail
 
-if [[ $(docker inspect -f {{.ID}} ttt_nginx_proxy 2> /dev/null) != "" ]]; then
-  docker rm -f ttt_nginx_proxy
+if [[ $(docker inspect -f {{.ID}} ttt_nginx_proxy_1 2> /dev/null) != "" ]]; then
+  docker rm -f ttt_nginx_proxy_1
 fi
 
 docker run \
 -d \
---name ttt_nginx_proxy \
---link ttt_db:db \
+--name ttt_nginx_proxy_1 \
 -p 443:443 \
 -p 80:80 \
+--env affinity:container==ttt_frontend_data \
+--env affinity:container==ttt_nginx_config_data \
+--env affinity:container==ttt_htpasswd_data \
+--env affinity:container==ttt_letsencrypt_data \
+--net tictactoe \
 --restart always \
 --volumes-from ttt_frontend_data \
+--volumes-from ttt_nginx_config_data \
 --volumes-from ttt_htpasswd_data \
 --volumes-from ttt_letsencrypt_data \
-nginx_proxy
+ttt_nginx_proxy

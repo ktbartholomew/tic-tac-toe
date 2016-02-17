@@ -6,7 +6,6 @@ EXPOSE 8080
 
 COPY package.json /usr/src/app/
 
-
 RUN npm install -g nodemon
 RUN npm install
 

@@ -19,7 +19,7 @@
     location /rethinkdb/ {
       auth_basic rethinkdb;
       auth_basic_user_file /etc/nginx/htpasswd/rethinkdb;
-      proxy_pass http://db:8080/;
+      proxy_pass http://ttt_db:8080/;
     }
     {%- endif -%}
 {% endmacro -%}

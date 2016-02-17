@@ -6,6 +6,7 @@ container_exists=$(docker ps -a -q -f name=ttt_letsencrypt_data)
 if [[ -z ${container_exists} ]]; then
   docker run \
   --name ttt_letsencrypt_data \
+  --env affinity:container==ttt_nginx_config_data \
   --volume /etc/letsencrypt \
   --volume /var/lib/letsencrypt \
   --entrypoint /bin/mkdir \

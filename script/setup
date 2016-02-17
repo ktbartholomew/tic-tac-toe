@@ -1,0 +1,38 @@
+#!/bin/bash
+
+set -ueo pipefail
+
+root=$(cd $(dirname ${0})/..; pwd)
+
+echo "Creating overlay network"
+${root}/script/create-network
+echo "Creating data volume container for RethinkDB"
+${root}/script/create-db-data
+echo "Creating data volume container for Redis"
+${root}/script/create-redis-data
+echo "Creating data volume container for NGINX config files"
+${root}/script/create-nginx-config-data
+echo "Creating data volume container for Let's Encrypt"
+${root}/script/create-letsencrypt-data
+echo "Creating data volume container for NGINX htpasswd file"
+${root}/script/create-htpasswd-data
+echo "Creating data volume container for front-end files"
+${root}/script/create-frontend-data
+echo "Starting RethinkDB container"
+${root}/script/start-db
+echo "Updating DB Schema"
+${root}/script/update-db-schema
+echo "Starting Redis container"
+${root}/script/start-redis
+echo "Compiling front-end assets and copying to data volume container"
+${root}/script/update-frontend
+echo "Building image for Node.js app"
+${root}/script/build-app
+echo "Starting 2 \"blue\" Node.js containers"
+${root}/script/start-app 2 blue
+echo "Updating NGINX config with IPs of Node.js containers"
+${root}/script/update-nginx blue
+echo "Building image for NGINX proxy"
+${root}/script/build-nginx-proxy
+echo "Starting NGINX proxy container"
+${root}/script/start-nginx-proxy

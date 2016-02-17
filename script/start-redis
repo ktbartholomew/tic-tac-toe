@@ -8,5 +8,7 @@ fi
 docker run \
 --detach \
 --name ttt_redis \
+--env affinity:container==ttt_redis_data \
+--net tictactoe \
 --volumes-from ttt_redis_data \
 redis

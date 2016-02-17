@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var sass = require('node-sass');
+var cssmin = require('cssmin');
 var rootDir = require('./root-dir');
 
 module.exports = function (callback) {
@@ -14,9 +15,11 @@ module.exports = function (callback) {
       return callback(err);
     }
 
-    var outputFile = path.resolve(rootDir, 'src/dist/css/main.css');
+    // Minify the compiled scss.
+    var minified = cssmin(result.css.toString());
 
-    fs.writeFile(outputFile, result.css, function (err, result) {
+    var outputFile = path.resolve(rootDir, 'src/dist/css/main.css');
+    fs.writeFile(outputFile, minified, function (err, result) {
       console.log('[doSass] Wrote ' + outputFile);
       return callback(err, result);
     });

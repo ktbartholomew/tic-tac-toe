@@ -6,7 +6,7 @@
  *       of those containers as a server in an NGINX backend pool. Copy the
  *       resulting config file to the nginx_proxy container, and have the
  *       container reload the config file to apply the changes.
- * @example reconfigure-nginx <blue|green>
+ * @example update-nginx <blue|green>
  *
  */
 
@@ -53,7 +53,7 @@ spawn('docker', [
   '-f',
   'label=color=' + APP_COLOR,
   '--format',
-  '{{.ID}}'
+  '{{.Names}}'
 ], {})
 .then(function (data) {
   if (!data) {
@@ -63,35 +63,12 @@ spawn('docker', [
   var servers = data.toString().trim();
   servers = servers.split('\n');
 
-  return servers;
-})
-.then(function (servers) {
-  if (servers.length === 0) {
-    return servers;
-  }
-
-  return new Promise(function (resolve, reject) {
-    var allThePorts = [];
-
-    servers.forEach(function (server) {
-      spawn('docker', [
-        'inspect',
-        '--format',
-        '{{.NetworkSettings.IPAddress}}',
-        server
-      ], {})
-      .then(function (data) {
-        allThePorts.push(data.toString().trim());
-
-        if(allThePorts.length === servers.length) {
-          return resolve(allThePorts);
-        }
-      })
-      .catch(function (err) {
-        console.log(err.toString());
-      });
-    });
+  servers.forEach(function (server, index, scope) {
+    // strip out the {NodeName}/ that Swarm adds here
+    scope[index] = path.basename(server);
   });
+
+  return servers;
 })
 .then(function (serverIPs) {
   // We now have an array of server IPs and ports, so let's render those into an NGINX config file
@@ -120,17 +97,22 @@ spawn('docker', [
   return spawn('docker', [
     'cp',
     path.resolve(__dirname, '../nginx/default.conf'),
-    'ttt_nginx_proxy:/etc/nginx/conf.d/default.conf'
+    'ttt_nginx_config_data:/etc/nginx/conf.d/default.conf'
   ]);
 })
 .then(function (result) {
   // Send SIGHUP to NGINX so it will reload the new config file
-  return spawn('docker', [
-    'kill',
-    '-s',
-    'HUP',
-    'ttt_nginx_proxy'
-  ]);
+  try {
+    return spawn('docker', [
+      'kill',
+      '-s',
+      'HUP',
+      'ttt_nginx_proxy_1'
+    ]);
+  } catch (e) {
+    console.log('[WARN] ttt_nginx_proxy_1 isn\'t running yet');
+    return result;
+  }
 })
 .catch(function (error) {
   console.log(error.toString());

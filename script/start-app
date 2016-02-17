@@ -16,16 +16,10 @@ for i in $(seq 1 ${scale}); do
   -d \
   --label color=${color} \
   --name=ttt_app_${color}_${i} \
-  --link ttt_redis:redis \
-  --link ttt_db:db \
   -e affinity:image==ttt_app \
-  -e affinity:container==ttt_nginx_proxy \
-  -e REDIS_HOST=redis \
-  -e RETHINKDB_HOST=db \
+  -e REDIS_HOST=ttt_redis \
+  -e RETHINKDB_HOST=ttt_db \
+  --net tictactoe \
   --restart=always \
   ttt_app
-done;
-
-for i in $(seq 1 ${scale}); do
-  echo "Container running at "$(docker inspect -f {{.NetworkSettings.IPAddress}} ttt_app_${color}_${i})":8080"
 done;

@@ -4,5 +4,6 @@ set -euo pipefail
 root=$(cd $(dirname ${0})/..; pwd)
 
 docker build \
--t nginx_proxy \
+--build-arg affinity:container==ttt_nginx_config_data \
+-t ttt_nginx_proxy \
 ${root}/nginx

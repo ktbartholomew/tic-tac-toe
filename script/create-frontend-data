@@ -6,6 +6,7 @@ container_exists=$(docker ps -a -q -f name=ttt_frontend_data)
 if [[ -z ${container_exists} ]]; then
   docker run \
   --name ttt_frontend_data \
+  --env affinity:container==ttt_nginx_config_data \
   --volume /usr/share/nginx/html \
   nginx \
   /bin/true

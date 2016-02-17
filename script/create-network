@@ -1,0 +1,9 @@
+#!/bin/bash
+set -euo pipefail
+
+if [[ $(docker network inspect tictactoe 2> /dev/null) == "null" ]]; then
+  docker network create \
+  --driver overlay \
+  --subnet 192.168.0.0/24 \
+  tictactoe
+fi

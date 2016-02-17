@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+
+container_exists=$(docker ps -a -q -f name=ttt_nginx_config_data)
+
+if [[ -z ${container_exists} ]]; then
+  docker run \
+  --name ttt_nginx_config_data \
+  --env constraint:node==/${NGINX_NODE_PATTERN}/ \
+  --volume /etc/nginx/conf.d \
+  nginx \
+  /bin/true
+fi
