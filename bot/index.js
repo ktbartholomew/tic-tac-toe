@@ -14,11 +14,14 @@ var send = function (data) {
 };
 
 var waitThenSend = function (data) {
+  var minWait = 800;
+  var maxWait = 1800;
+
   return new Promise(function (resolve, reject) {
     setTimeout(function () {
       send(data);
       return resolve();
-    }, Math.floor(Math.random() * 1800) + 800);
+    }, Math.floor(Math.random() * maxWait) + minWait);
   });
 };
 
@@ -54,11 +57,37 @@ var move = function () {
   };
 };
 
+var isItMyTurn = function () {
+  var filledSquares = 0;
+
+  for (var i = 0; i <= 2; i++) {
+    for (var j = 0; j <= 2; j++) {
+      if (currentGame.grid[i][j] !== null) {
+        filledSquares++;
+      }
+    }
+  }
+
+  if (currentGame.team === 'x') {
+    return (filledSquares % 2 === 0);
+  }
+
+  if (currentGame.team === 'o') {
+    return (filledSquares % 2 !== 0);
+  }
+};
+
 ws.on('open', function () {
   send({
     action: 'joinGame',
     data: null
   });
+
+  setInterval(function () {
+    send({
+      action: 'ping'
+    });
+  }, 20000);
 });
 
 ws.on('message', function (data) {
@@ -81,11 +110,20 @@ var handlers = {
   },
   updateGrid: function (data) {
     currentGame.grid = data.grid;
-    waitThenSend(move());
+
+    if (!currentGame.team) {
+      return;
+    }
+
+    if (isItMyTurn()) {
+      waitThenSend(move());
+    }
   },
   updateGameStatus: function (data) {
     if (data.status === 'in-progress') {
-      return waitThenSend(move());
+      if (isItMyTurn()) {
+        return waitThenSend(move());
+      }
     }
 
     if (['finished', 'finished-draw', 'abandoned'].indexOf(data.status) !== -1) {

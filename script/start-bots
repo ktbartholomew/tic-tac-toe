@@ -6,12 +6,13 @@ if [ -z ${1} ]; then
   exit 1
 fi
 
-docker ps -q -f name=bot_ | xargs docker rm -f
+docker ps -q -f name=ttt_bot_ | xargs docker rm -f
 
 for i in $(seq 1 ${1:-1}); do
   docker run \
   -d \
-  --name=bot_${i} \
+  --name=ttt_bot_${i} \
+  -e affinity:image==ttt_bot \
   --restart=always \
-  bot
+  ttt_bot
 done;
