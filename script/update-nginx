@@ -15,12 +15,7 @@ var path = require('path');
 var child_process = require('child_process');
 var nunjucks = require('nunjucks');
 
-if (!process.argv[2]) {
-  console.log('Usage: %s <color>', path.basename(__filename));
-  process.exit();
-}
-
-var APP_COLOR = process.argv[2];
+var APP_COLOR = process.argv[2] || '';
 
 var spawn = function () {
   var spawnArgs = arguments;
@@ -51,7 +46,7 @@ spawn('docker', [
   '-f',
   'name=ttt_app_',
   '-f',
-  'label=color=' + APP_COLOR,
+  'label=color' + ((APP_COLOR) ? '=' + APP_COLOR : ''),
   '--format',
   '{{.Names}}'
 ], {})

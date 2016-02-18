@@ -4,7 +4,7 @@ set -euo pipefail
 # Re-issue the certificate.
 docker run \
   --rm \
-  --volumes-from letsencrypt-data \
+  --volumes-from ttt_letsencrypt_data \
   quay.io/letsencrypt/letsencrypt certonly \
   --domain tictac.io \
   --authenticator webroot \
