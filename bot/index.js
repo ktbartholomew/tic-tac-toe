@@ -14,8 +14,8 @@ var send = function (data) {
 };
 
 var waitThenSend = function (data) {
-  var minWait = 800;
-  var maxWait = 1800;
+  var minWait = 80;
+  var maxWait = 200;
 
   return new Promise(function (resolve, reject) {
     setTimeout(function () {
@@ -104,7 +104,7 @@ var handlers = {
     currentGame.id = data.gameId;
     currentGame.team = data.team;
 
-    if (data.team === 'x') {
+    if (isItMyTurn()) {
       waitThenSend(move());
     }
   },
