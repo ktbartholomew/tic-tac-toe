@@ -148,18 +148,18 @@ var handlers = {
       break;
     }
 
-    this.renderer.render();
+    this.renderer.updateGrid();
     requestAnimationFrame(function () {
       document.getElementById('game-status').textContent = statusString;
     }.bind(this));
   },
   updateGrid: function (message) {
     this.grid = message.data.grid;
-    this.renderer.render();
+    this.renderer.updateGrid();
   },
   updateWinner: function (message) {
     this.winner = message.data.winner;
-    this.renderer.render();
+    this.renderer.updateGrid();
   }
 };
 

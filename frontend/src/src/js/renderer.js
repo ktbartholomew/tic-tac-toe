@@ -10,8 +10,16 @@ TTX.src = '/x.png';
 var TTCircle = new Image();
 TTCircle.src = '/circle.png';
 
+var FilledSquare = function (options) {
+  this.created = new Date();
+  this.sprite = options.sprite;
+};
+
+
 var GameRenderer = function (options) {
   this.game = options.game;
+  this.grid = [[null,null,null],[null,null,null],[null,null,null]];
+  this.animationInProgress = false;
 
   this.canvas = document.createElement('canvas');
   this.canvas.width = 768;
@@ -22,6 +30,43 @@ var GameRenderer = function (options) {
 
   this.canvas.addEventListener('click', clickOrTapHandler.bind(this));
   this.canvas.addEventListener('touchend', clickOrTapHandler.bind(this));
+};
+
+GameRenderer.prototype.updateGrid = function () {
+  for(var i = 0; i < this.game.grid.length; i++) {
+    for(var j = 0; j < this.game.grid[i].length; j++) {
+      // If the grid has changed to null, we change to null. Pretty simple.
+      if (this.game.grid[i][j] === null) {
+        this.grid[i][j] = null;
+        continue;
+      }
+
+      // If our square was null, fill it with whatever the new grid has.
+      if (this.grid[i][j] === null) {
+        this.grid[i][j] = new FilledSquare({
+          sprite: (this.game.grid[i][j] === 'x') ? TTX : TTCircle
+        });
+        continue;
+      }
+
+      // Don't recreate the filledSquare if the sprite is unchanged
+      if (this.game.grid[i][j] === 'x' && this.grid[i][j].sprite != TTX) {
+        this.grid[i][j] = new FilledSquare({
+          sprite: TTX
+        });
+        continue;
+      }
+
+      if (this.game.grid[i][j] === 'o' && this.grid[i][j].sprite != TTCircle) {
+        this.grid[i][j] = new FilledSquare({
+          sprite: TTCircle
+        });
+        continue;
+      }
+    }
+  }
+
+  this.render();
 };
 
 GameRenderer.prototype.render = function () {
@@ -35,18 +80,27 @@ var doRender = function () {
 
   ctx.drawImage(GridImage, 0, 0, 768, 768);
 
+  var animationInProgress = false;
+
   // Loop through and render the squares on the board
-  for(var i = 0; i < this.game.grid.length; i++) {
-    for(var j = 0; j < this.game.grid[i].length; j++) {
-      if (this.game.grid[i][j]) {
+  for(var i = 0; i < this.grid.length; i++) {
+    for(var j = 0; j < this.grid[i].length; j++) {
+      if (this.grid[i][j]) {
+        var age = new Date() - this.grid[i][j].created;
+
+        if (age < 150) {
+          animationInProgress = true;
+        }
+
+        var agingPercent = Math.min(age / 150, 1);
+        agingPercent = agingPercent * agingPercent * agingPercent;
+
         var squareCoords = toCanvasGrid({x: i, y: j});
 
-        squareCoords.x = squareCoords.x + 32;
-        squareCoords.y = squareCoords.y + 32;
+        squareCoords.x = squareCoords.x + 32 + (96 - 96 * agingPercent);
+        squareCoords.y = squareCoords.y + 32 + (96 - 96 * agingPercent);
 
-        var filledWith = (this.game.grid[i][j] === 'x') ? TTX : TTCircle;
-
-        ctx.drawImage(filledWith, squareCoords.x, squareCoords.y, 192, 192);
+        ctx.drawImage(this.grid[i][j].sprite, squareCoords.x, squareCoords.y, 192 * agingPercent, 192 * agingPercent);
       }
     }
   }
@@ -75,7 +129,11 @@ var doRender = function () {
   }
 
   ctx.restore();
-  // requestAnimationFrame(render);
+
+  if(animationInProgress) {
+    this.render();
+  }
+
 };
 
 // convert a pixel coordinate (the size of the canvas) to a game coordinate
