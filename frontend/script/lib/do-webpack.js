@@ -10,8 +10,11 @@ module.exports = function (callback) {
       console.log(err);
       return;
     }
-    console.log('[doWebpack] Wrote ' + path.resolve(rootDir, 'src/dist/js/app.js'));
 
+    console.log('[doWebpack] Packed %s modules into output file: %s',
+      stats.compilation.modules.length,
+      path.resolve(rootDir, 'src/dist/js/app.js')
+    );
     callback(err, stats);
   });
 };

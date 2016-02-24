@@ -3,7 +3,7 @@ set -euo pipefail
 
 root=$(cd $(dirname ${0})/..; pwd)
 
-${root}/frontend/script/compile-assets
+NODE_ENV=production ${root}/frontend/script/compile-assets
 
 cd ${root}/frontend/src
 
