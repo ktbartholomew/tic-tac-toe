@@ -6,6 +6,8 @@ The entire stack runs in a handful of Docker containers, and is super-easy to de
 
 [Play the game](https://tictac.io/)
 
+[Read the blog post](https://getcarina.com/blog/build-real-time-game-carina/)
+
 ### Installation
 
 **Before you start:** This application depends on overlay networks, so you'll need to run this on a Docker host that supports them. Any Carina cluster created after 2016-02-15 has this capability.
