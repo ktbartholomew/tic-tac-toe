@@ -3,7 +3,8 @@ var r = require('rethinkdb');
 var DB_NAME = 'tictactoe';
 var DB_TABLES = [
   'games',
-  'stats'
+  'stats',
+  'bot_stats'
 ];
 
 var bootstrap = function (Connection) {
@@ -57,7 +58,16 @@ var bootstrap = function (Connection) {
   .then(function (indexes) {
     if (indexes.indexOf('playerSocketId') === -1) {
       console.log('Creating multi index \'playerSocketId\' on table \'games\'');
-      r.table('games').indexCreate('playerSocketId', r.row('players')('socketId'), {multi: true}).run(Connection);
+      return r.table('games').indexCreate('playerSocketId', r.row('players')('socketId'), {multi: true}).run(Connection);
+    }
+  })
+  .then(function () {
+    return r.table('bot_stats').indexList().run(Connection);
+  })
+  .then(function (indexes) {
+    if (indexes.indexOf('state') === -1) {
+      console.log('Creating simple index \'state\' on table \'bot_stats\'');
+      return r.table('bot_stats').indexCreate('state').run(Connection);
     }
   })
   .then(function () {

@@ -13,6 +13,8 @@ for i in $(seq 1 ${1:-1}); do
   -d \
   --name=ttt_bot_${i} \
   -e affinity:image==ttt_bot \
+  -e DB_HOST=ttt_db \
+  --net tictactoe \
   --restart=always \
   ttt_bot
 done;

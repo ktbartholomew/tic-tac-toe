@@ -1,12 +1,80 @@
+var r = require('rethinkdb');
 var WebSocket = require('ws');
+
 var ws = new WebSocket('wss://tictac.io/live/');
+var conn = null;
+
+r.connect({host: process.env.DB_HOST, db: 'tictactoe'})
+.then(function (connection) {
+  conn = connection;
+});
 
 var emptyGrid = [[null, null, null],[null, null, null],[null, null, null]];
 
 var currentGame = {
   id: null,
   team: null,
-  grid: emptyGrid
+  grid: emptyGrid,
+  winner: null,
+  frames: []
+};
+
+var gridToFrame = function (grid) {
+  // convert a 2-dimensional grid array to a 9-character string of only [0-2]
+  // 0 is empty
+  // 1 is X
+  // 2 is O
+
+  var frame = ['0','0','0','0','0','0','0','0','0'];
+
+  grid.forEach(function (column, xIndex) {
+    // Each element of grid is a column.
+    column.forEach(function (cell, yIndex) {
+      // Each element of the column is a cell, from top to bottom.
+      // We can translate the position in the 2d-array to the 1d array with this
+      // little formula:
+      var frameIndex = (yIndex * 3) + xIndex;
+
+      switch (cell) {
+        case null:
+          frame[frameIndex] = '0';
+        break;
+        case 'x':
+          frame[frameIndex] = '1';
+        break;
+        case 'o':
+          frame[frameIndex] = '2';
+        break;
+      }
+    });
+  });
+
+  return frame.join('');
+};
+
+var playToFrame = function (play) {
+  // we will switch one of the characters in this string to 1 or 2, for X or O.
+  var frame = ['0','0','0','0','0','0','0','0','0'];
+  var playIndex = (play.coords.y * 3) + play.coords.x;
+  frame[playIndex] = (play.team === 'x') ? '1' : '2';
+
+  // squash the array to a string
+  return frame.join('');
+};
+
+var storeFrames = function (currentGame) {
+  var winner;
+  if (currentGame.winner === null) {
+    winner = '0';
+  } else {
+    winner = (currentGame.winner === 'x') ? '1' : '2';
+  }
+
+  currentGame.frames.forEach(function (frame, index, scope) {
+    scope[index].result = winner;
+  });
+
+  return r.table('bot_stats').insert(currentGame.frames).run(conn);
 };
 
 var send = function (data) {
@@ -45,6 +113,19 @@ var move = function () {
   };
 
   var square = pickASquare();
+
+  if (!square) {
+    return {};
+  }
+
+  // Record the move in our list of frames, which will be submitted to the DB
+  // when we know who wins.
+  currentGame.frames.push({
+    state: gridToFrame(currentGame.grid),
+    action: playToFrame({team: currentGame.team, coords: square}),
+    result: null
+  });
+
   console.log('[%s] Playing %j', new Date(), square);
 
   return {
@@ -119,6 +200,9 @@ var handlers = {
       waitThenSend(move());
     }
   },
+  updateWinner: function (data) {
+    currentGame.winner = data.winner;
+  },
   updateGameStatus: function (data) {
     if (data.status === 'in-progress') {
       if (isItMyTurn()) {
@@ -127,13 +211,17 @@ var handlers = {
     }
 
     if (['finished', 'finished-draw', 'abandoned'].indexOf(data.status) !== -1) {
-      currentGame.id = null;
-      currentGame.team = null;
-      currentGame.grid = emptyGrid;
+      storeFrames(currentGame).then(function () {
+        currentGame.id = null;
+        currentGame.team = null;
+        currentGame.grid = emptyGrid;
+        currentGame.winner = null;
+        currentGame.frames = [];
 
-      waitThenSend({
-        action: 'joinGame',
-        data: null
+        waitThenSend({
+          action: 'joinGame',
+          data: null
+        });
       });
     }
   }
