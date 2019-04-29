@@ -6,7 +6,7 @@ The entire stack runs in a handful of Docker containers, and is super-easy to de
 
 [Play the game](https://tictac.io/)
 
-[Read the blog post](https://getcarina.com/blog/build-real-time-game-carina/)
+[Read the blog post](blog/README.md)
 
 ### Installation
 
