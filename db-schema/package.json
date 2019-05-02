@@ -6,9 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Keith Bartholomew <keith.bartholomew@rackspace.com>",
+  "author": "Keith Bartholomew <keith.bartholomew@gmail.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "rethinkdb": "2.2.1"
+    "rethinkdb": "2.3.3"
   }
 }

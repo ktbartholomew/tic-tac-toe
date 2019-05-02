@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: tic-tac-toe
+  name: ingress
+spec:
+  tls:
+  - secretName: tic-tac-toe-tls
+    hosts:
+    - tictactoe.keithbartholomew.com
+  rules:
+  - host: tictactoe.keithbartholomew.com
+    http:
+      paths:
+        - path: /live
+          backend:
+            serviceName: app
+            servicePort: 8080
+        - backend:
+            serviceName: frontend
+            servicePort: 80
