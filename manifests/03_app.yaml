@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: tic-tac-toe
+  name: app
+spec:
+  selector:
+    app.kubernetes.io/component: app
+  ports:
+  - port: 8080
+    name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: tic-tac-toe
+  name: app
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: app
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+    spec:
+      containers:
+      - name: app
+        image: quay.io/ktbartholomew/tic-tac-toe-app:latest
+        env:
+        - name: RETHINKDB_HOST
+          value: rethinkdb.tic-tac-toe.svc.cluster.local
+        - name: REDIS_HOST
+          value: redis.tic-tac-toe.svc.cluster.local
+        ports:
+        - containerPort: 8080
+          name: http

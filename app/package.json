@@ -6,12 +6,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Keith Bartholomew <keith.bartholomew@rackspace.com>",
+  "author": "Keith Bartholomew <keith.bartholomew@gmail.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "node-uuid": "1.4.7",
-    "redis": "^2.4.2",
-    "rethinkdb": "2.2.1",
-    "ws": "^1.0.1"
+    "uuid": "3.3.2",
+    "redis": "2.8.0",
+    "rethinkdb": "2.3.3",
+    "ws": "7.0.0"
   }
 }
